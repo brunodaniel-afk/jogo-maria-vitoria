@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2a0f2e">
+<title>Maria Vitória, esse jogo é pra você 💖</title>
+<style>
+:root{--bg:#2a0f2e;--bg2:#4a1747;--rose:#ff5c8a;--gold:#ffd37a;--ink:#fbeeff;--soft:#d3b3de}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+body{background:radial-gradient(120% 80% at 50% 0%,var(--bg2),var(--bg))}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;padding:calc(20px + env(safe-area-inset-top,0px)) 20px calc(20px + env(safe-area-inset-bottom,0px));overflow-y:auto}
+.screen.on{display:flex}
+h1,h2{font-family:Georgia,"Times New Roman",serif;margin:0 0 10px;line-height:1.15}
+h1{font-size:2.2rem}h2{font-size:1.55rem}
+p{color:var(--soft);line-height:1.5;margin:0 0 16px}
+.center{margin:auto 0;text-align:center}
+.big{font-size:4.5rem;display:block;margin-bottom:8px;animation:beat 1.2s infinite}
+@keyframes beat{50%{transform:scale(1.15)}}
+button{font:inherit;border:0;border-radius:999px;padding:15px 28px;background:var(--rose);color:#2a0f2e;font-weight:700;font-size:1.05rem;cursor:pointer}
+button:active{transform:scale(.96)}
+.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--soft)}
+.bar{height:10px;background:#ffffff22;border-radius:9px;overflow:hidden;margin:6px 0 10px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--rose),var(--gold));transition:width .3s}
+.cap{color:var(--gold);font-weight:700;margin-bottom:6px}
+#arena{position:relative;flex:1;min-height:300px;overflow:hidden;border-radius:20px;background:#ffffff0d;touch-action:manipulation}
+.h{position:absolute;top:-60px;line-height:1;cursor:pointer;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(calc(100vh + 80px))}}
+.pop{position:absolute;font-weight:800;color:var(--gold);pointer-events:none;animation:pop .7s forwards}
+@keyframes pop{to{transform:translateY(-40px);opacity:0}}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:6px 0 10px}
+.mc{aspect-ratio:1/1;border-radius:16px;background:#ffffff14;border:1.5px dashed #ffffff44;font-size:2.4rem;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.mc.up{background:#ff5c8a33;border:1.5px solid var(--rose)}
+.mc.done{background:#3ddc9733;border:1.5px solid #3ddc97}
+.opts{display:grid;gap:10px;margin-top:8px}
+.opts button{background:#ffffff14;color:var(--ink);text-align:left;border-radius:16px;font-weight:600}
+.opts button.ok{background:#3ddc97;color:#102a1d}
+.opts button.no{background:#ff5c8a55;animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.msg{min-height:1.6em;color:var(--gold);font-weight:600;margin-top:8px}
+.letter{background:#fbeeff;color:#3a1238;border-radius:18px;padding:22px;font-family:Georgia,serif;line-height:1.6;font-size:1.05rem;white-space:pre-wrap;margin-bottom:16px}
+.fly{position:fixed;bottom:-40px;pointer-events:none;animation:up linear forwards;z-index:9}
+@keyframes up{to{transform:translateY(-110vh) rotate(25deg)}}
+@media (prefers-reduced-motion:reduce){.big{animation:none}}
+</style>
+</head>
+<body>
+
+<section class="screen on" id="intro">
+  <div class="center">
+    <span class="big">💖</span>
+    <h1>Oi, Maria Vitória!</h1>
+    <p>Fiz um jogo só pra você. Cada fase conta um pedacinho da nossa história, e no final tem uma mensagem especial.</p>
+    <button onclick="chapter(1)">Começar</button>
+  </div>
+</section>
+
+<section class="screen" id="chap">
+  <div class="center">
+    <span class="big" id="cEmoji"></span>
+    <div class="cap" id="cNum"></div>
+    <h2 id="cTitle"></h2>
+    <p id="cText"></p>
+    <button id="cBtn">Jogar</button>
+  </div>
+</section>
+
+<section class="screen" id="g1">
+  <h2>Corações a caminho de Aparecida ⛪</h2>
+  <p>Toque nos corações. Os dourados valem 3!</p>
+  <div class="cap">💗 <span id="cnt">0</span> / <span id="meta"></span></div>
+  <div class="bar"><i id="barra"></i></div>
+  <div id="arena"></div>
+</section>
+
+<section class="screen" id="g2">
+  <h2>Jogo da memória das nossas lembranças</h2>
+  <p>Encontre os pares.</p>
+  <div class="bar"><i id="barraM"></i></div>
+  <div class="grid" id="board"></div>
+  <div class="msg" id="msgM"></div>
+</section>
+
+<section class="screen" id="g3">
+  <h2>Quanto você sabe sobre nós?</h2>
+  <div class="bar"><i id="barraQ"></i></div>
+  <p id="pergunta" style="color:var(--ink);font-size:1.15rem;margin-top:8px"></p>
+  <div class="opts" id="opts"></div>
+  <div class="msg" id="msgQ"></div>
+</section>
+
+<section class="screen" id="fim">
+  <h2>Maria Vitória, com todo o meu amor</h2>
+  <div class="letter" id="carta"></div>
+  <div style="text-align:center;display:grid;gap:10px">
+    <p style="margin:0">Nível de amor: <b style="color:var(--gold)">infinito ∞</b></p>
+    <button class="ghost" onclick="show('intro')">Jogar de novo</button>
+  </div>
+</section>
+
+<script>
+/* ====== PERSONALIZE AQUI ====== */
+const CFG = {
+  de: "Seu namorado",
+  meta: 15,
+  caps: [
+    {e:"⛪", t:"Nossa viagem a Aparecida", x:"Um dos nossos dias mais especiais. Junte os corações pra reviver a viagem.", fim:"Aquele dia ficou guardado no meu coração. 💖"},
+    {e:"🍕", t:"As nossas lembranças", x:"Pizza, música, presentes… Ache os pares e relembre o que é só nosso.", fim:"Cada detalhe com você virou memória boa. 🥰"},
+    {e:"💌", t:"Quanto você me conhece?", x:"Última fase! Responda sobre a nossa história.", fim:""}
+  ],
+  pares: [["⛪","Aparecida"],["🍕","Nossa pizza"],["👟","O tênis que te dei"],["🎵","A nossa música"],["💑","Eu e você"],["💌","Cada mensagem"]],
+  quiz: [
+    {q:"Qual viagem a gente fez junto?", o:["Paris","Aparecida","Fernando de Noronha","Disney"], certa:1},
+    {q:"O que a gente mais ama comer juntos?", o:["Sushi","Lasanha","Pizza","Hambúrguer"], certa:2},
+    {q:"Qual presente eu te dei?", o:["Um perfume","Uma bolsa","Um tênis","Um anel"], certa:2},
+    {q:"Quanto eu te amo?", o:["Muito","Demais","Infinito","Mais que pizza"], certa:-1}
+  ],
+  carta:
+`Maria Vitória,
+
+Cinco meses e eu ainda sorrio sozinho quando lembro de você. Da nossa viagem a Aparecida, das nossas pizzas, da nossa música, de cada pedacinho da gente.
+
+Você deixou meus dias mais leves e mais bonitos. Obrigado por cada risada, cada abraço e por escolher estar comigo.
+
+Esse jogo é pequeno perto do que eu sinto, mas foi feito com muito carinho.
+
+Eu te amo muito, hoje e sempre. 💖`
+};
+/* ====== FIM DA PERSONALIZAÇÃO ====== */
+
+const $ = id => document.getElementById(id);
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  $(id).classList.add('on');
+}
+function chapter(n){
+  const c=CFG.caps[n-1];
+  $('cEmoji').textContent=c.e;$('cNum').textContent='Capítulo '+n;
+  $('cTitle').textContent=c.t;$('cText').textContent=c.x;
+  $('cBtn').onclick=()=>{show('g'+n);[0,startHearts,startMemory,startQuiz][n]();};
+  show('chap');
+}
+function next(n){
+  // mostra mensagem do capítulo concluído e vai para o próximo
+  if(n===3){show('fim');$('carta').textContent=CFG.carta+'\n\n— '+CFG.de;confetti();return;}
+  const c=CFG.caps[n-1];
+  $('cEmoji').textContent='✨';$('cNum').textContent='Fase '+n+' completa!';
+  $('cTitle').textContent=c.fim;$('cText').textContent='';
+  $('cBtn').textContent='Próximo capítulo';
+  $('cBtn').onclick=()=>{$('cBtn').textContent='Jogar';chapter(n+1);};
+  show('chap');
+}
+
+/* Fase 1: corações */
+let pts=0,timer;
+function startHearts(){
+  pts=0;$('cnt').textContent=0;$('barra').style.width='0';$('meta').textContent=CFG.meta;$('arena').innerHTML='';
+  clearInterval(timer);timer=setInterval(spawn,650);spawn();
+}
+function spawn(){
+  const a=$('arena'),h=document.createElement('div'),gold=Math.random()<.15;
+  h.className='h';h.textContent=gold?'💛':['💖','💗','💕','💘'][Math.floor(Math.random()*4)];
+  h.style.fontSize=(30+Math.random()*26)+'px';
+  h.style.left=Math.random()*Math.max(10,a.clientWidth-60)+'px';
+  h.style.animationDuration=(3.5+Math.random()*2.5)+'s';
+  const hit=e=>{
+    e.preventDefault();
+    const v=gold?3:1;pts+=v;$('cnt').textContent=Math.min(pts,CFG.meta);
+    $('barra').style.width=Math.min(100,pts/CFG.meta*100)+'%';
+    const p=document.createElement('div');p.className='pop';p.textContent='+'+v;
+    p.style.left=h.offsetLeft+'px';p.style.top=(h.getBoundingClientRect().top-a.getBoundingClientRect().top)+'px';
+    a.appendChild(p);setTimeout(()=>p.remove(),700);h.remove();
+    if(pts>=CFG.meta&&timer){clearInterval(timer);timer=null;setTimeout(()=>next(1),500);}
+  };
+  h.addEventListener('click',hit);
+  h.addEventListener('animationend',()=>h.remove());
+  a.appendChild(h);
+}
+
+/* Fase 2: memória */
+let first=null,lock=false,found=0;
+function startMemory(){
+  first=null;lock=false;found=0;$('barraM').style.width='0';$('msgM').textContent='';
+  const deck=[...CFG.pares,...CFG.pares].map(p=>({e:p[0],n:p[1]})).sort(()=>Math.random()-.5);
+  $('board').innerHTML='';
+  deck.forEach(d=>{
+    const c=document.createElement('div');c.className='mc';c.textContent='❓';
+    c.onclick=()=>{
+      if(lock||c.classList.contains('up')||c.classList.contains('done'))return;
+      c.classList.add('up');c.textContent=d.e;
+      if(!first){first={c,d};return;}
+      if(first.d.e===d.e){
+        c.className='mc done';first.c.className='mc done';
+        found++;$('barraM').style.width=(found/CFG.pares.length*100)+'%';
+        $('msgM').textContent=d.n+' 💕';first=null;
+        if(found===CFG.pares.length)setTimeout(()=>next(2),900);
+      }else{
+        lock=true;const f=first;first=null;
+        setTimeout(()=>{c.className='mc';c.textContent='❓';f.c.className='mc';f.c.textContent='❓';lock=false;},800);
+      }
+    };
+    $('board').appendChild(c);
+  });
+}
+
+/* Fase 3: quiz */
+let qi=0;
+function startQuiz(){qi=0;showQ();}
+function showQ(){
+  const q=CFG.quiz[qi];
+  $('barraQ').style.width=(qi/CFG.quiz.length*100)+'%';
+  $('pergunta').textContent=q.q;$('msgQ').textContent='';$('opts').innerHTML='';
+  q.o.forEach((t,i)=>{
+    const b=document.createElement('button');b.textContent=t;
+    b.onclick=()=>{
+      if(q.certa===-1||i===q.certa){
+        b.className='ok';$('msgQ').textContent=q.certa===-1?'Resposta perfeita! 😍':'Acertou! 🥰';
+        document.querySelectorAll('#opts button').forEach(x=>x.disabled=true);
+        setTimeout(()=>{qi++;qi<CFG.quiz.length?showQ():next(3);},900);
+      }else{b.className='no';$('msgQ').textContent='Quase! Tenta de novo 😘';}
+    };
+    $('opts').appendChild(b);
+  });
+}
+
+/* Final */
+function confetti(){
+  for(let i=0;i<28;i++){
+    const f=document.createElement('div');f.className='fly';f.textContent=['💖','💗','💕','✨'][i%4];
+    f.style.left=Math.random()*95+'vw';f.style.fontSize=(18+Math.random()*22)+'px';
+    f.style.animationDuration=(3+Math.random()*3)+'s';f.style.animationDelay=(Math.random()*1.5)+'s';
+    document.body.appendChild(f);setTimeout(()=>f.remove(),7000);
+  }
+}
+</script>
+</body>
+</html>
